@@ -1,0 +1,3 @@
+[submodule "YOLOv6"]
+	path = YOLOv6
+	url = https://github.com/kadirnar/Yolov6-SAHI.git
