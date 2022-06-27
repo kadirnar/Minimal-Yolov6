@@ -29,14 +29,14 @@ detection_model.inference()
 Single GPU
 
 ```shell
-python tools/train.py --batch 32 --conf configs/yolov6s.py --data data/coco.yaml --device 0
+python YOLOv6/tools/train.py --batch 32 --conf configs/yolov6s.py --data data/coco.yaml --device 0
                                          configs/yolov6n.py
 ```
 
 Multi GPUs (DDP mode recommended)
 
 ```shell
-python -m torch.distributed.launch --nproc_per_node 8 tools/train.py --batch 256 --conf configs/yolov6s.py --data data/coco.yaml --device 0,1,2,3,4,5,6,7
+python -m torch.distributed.launch --nproc_per_node 8 YOLOv6/tools/train.py --batch 256 --conf configs/yolov6s.py --data data/coco.yaml --device 0,1,2,3,4,5,6,7
                                                                                         configs/yolov6n.py
 ```
 
@@ -49,7 +49,7 @@ python -m torch.distributed.launch --nproc_per_node 8 tools/train.py --batch 256
 Reproduce mAP on COCO val2017 dataset
 
 ```shell
-python tools/eval.py --data data/coco.yaml  --batch 32 --weights yolov6s.pt --task val
+python YOLOv6/tools/eval.py --data data/coco.yaml  --batch 32 --weights yolov6s.pt --task val
                                                                  yolov6n.pt
 ```
 
