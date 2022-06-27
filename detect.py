@@ -32,15 +32,14 @@ class Yolov6:
         self,
         model_path: str,
         device: str,
-        half: bool = False,
-        img_size: int = 416,
+        img_size: int = 640,
         source : str = 'YOLOv6/data/images/image1.jpg',
         conf_thres: float = 0.3,
         iou_thres: float = 0.5,
         yaml : str = 'YOLOv6/data/coco.yaml',
         
     ):  
-        self.half = half
+        self.half = False
         self.model_path = model_path
         self.img_size = img_size
         self.conf_thres = conf_thres
@@ -68,7 +67,7 @@ class Yolov6:
 
 
         
-    def postprocces(self, classes=None, agnostic_nms=False, max_det=1000, save_dir=None, save_txt=False, save_img=True, hide_labels=False, hide_conf=False):
+    def inference(self, classes=None, agnostic_nms=False, max_det=1000, save_dir=None, save_txt=False, save_img=True, hide_labels=False, hide_conf=False):
         # create save dir
         project, name = osp.join(ROOT, 'runs/inference'), "exp"
         save_dir = osp.join(project, name)
@@ -119,7 +118,7 @@ class Yolov6:
                         class_num = int(cls)  # integer class
                         label = None if hide_labels else (self.yaml[class_num] if hide_conf else f'{self.yaml[class_num]} {conf:.2f}')
 
-                        Inferer.plot_box_and_label(img_ori, max(round(sum(img_ori.shape) / 2 * 0.003), 2), xyxy, label, color=Inferer.generate_colors(class_num, True))
+                        Inferer.plot_box_and_label(img_ori, max(round(sum(img_ori.shape) / 2 * 0.001), 2), xyxy, label, color=Inferer.generate_colors(class_num, True))
 
                 img_src = np.asarray(img_ori)
 
@@ -130,13 +129,10 @@ class Yolov6:
         
 detection_model = Yolov6(
     model_path="yolov6s.pt",
-    source="YOLOv6/data/images/image1.jpg",
-    img_size=640,
+    source="1.jpg",
+    img_size=1280,
     conf_thres=0.3,
-    iou_thres=0.5,
     device="cpu",
-    yaml="YOLOv6/data/coco.yaml",
-    half=False,
 )
 
-detection_model.postprocces()
+detection_model.inference()

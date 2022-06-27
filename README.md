@@ -1,30 +1,30 @@
-## Quick Start
+<div align="center">
+<h1>
+YOLOv6: Single-stage Object Detection</h1>
+<img src="assert/yolov6_highway.jpg" alt="Yolite" width="800">
+</div>
 
-### Install
 
+### Installation
 ```shell
 git clone --recurse-submodules https://github.com/kadirnar/YOLOv6.git
 cd YOLOv6
 pip install -r requirements.txt
 ```
 
-### Yolov6 Inference
-
-First, download a pretrained model from the YOLOv6 release
-
-Second, run inference with `tools/infer.py`
-
+### Inference
 ```shell
-python tools/detect.py --weights yolov6s.pt --source [img.jpg / imgdir]                       
+detection_model = Yolov6(
+    model_path="yolov6s.pt",
+    source="assert/highway.jpg",
+    img_size=1280,
+    conf_thres=0.3,
+    device="cpu",
+)
+detection_model.inference()
 ```
 
-### Yolov6+ SAHI Inference
-
-- [ ] It will be added very soon.
-
-
-
-### Yolov6 Training
+### Training
 
 Single GPU
 
