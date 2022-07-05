@@ -1,3 +1,4 @@
+import imp
 import os
 import sys
 from pathlib import Path
@@ -21,11 +22,11 @@ import numpy as np
 import cv2
 import torch
 
-from YOLOv6.yolov6.utils.events import load_yaml
 from YOLOv6.yolov6.layers.common import DetectBackend
 from YOLOv6.yolov6.utils.nms import non_max_suppression
 from YOLOv6.yolov6.data.datasets import IMG_FORMATS
 from YOLOv6.yolov6.utils.events import LOGGER
+from utils import COCO_CLASSES
 
 class Yolov6:
     def __init__(
@@ -36,7 +37,7 @@ class Yolov6:
         source : str = 'YOLOv6/data/images/image1.jpg',
         conf_thres: float = 0.3,
         iou_thres: float = 0.5,
-        yaml : str = 'YOLOv6/data/coco.yaml',
+        tracker: bool = True,
         
     ):  
         self.half = False
@@ -47,7 +48,8 @@ class Yolov6:
         self.device = device
         cuda = self.device != 'cpu' and torch.cuda.is_available()
         self.device = torch.device('cuda:0' if cuda else 'cpu')
-        self.yaml = yaml
+        self.tracker = tracker
+
         self.source = source
         self.load_model()
 
@@ -60,25 +62,22 @@ class Yolov6:
             self.model.model.half()
         else:
             self.model.model.float()
-            half = False
         
         if self.device.type != 'cpu':
             self.model(torch.zeros(1, 3, *self.img_size).to(self.device).type_as(next(self.model.model.parameters())))  # warmup
 
-
         
-    def inference(self, classes=None, agnostic_nms=False, max_det=1000, save_dir=None, save_txt=False, save_img=True, hide_labels=False, hide_conf=False):
+    def inference(self, classes=None, agnostic_nms=False, max_det=1000, save_dir=None, save_txt=False, save_img=True, hide_labels=False, hide_conf=False, tracker=True):
         # create save dir
         project, name = osp.join(ROOT, 'runs/inference'), "exp"
         save_dir = osp.join(project, name)
+        object_prediction_list = []
 
         if not osp.exists(save_dir):
             os.makedirs(save_dir)
         else:
             LOGGER.warning('Save directory already existed')    
             
-        self.yaml = load_yaml(self.yaml)['names']    
-        
         # Load data
         if os.path.isdir(self.source):
             img_paths = sorted(glob.glob(os.path.join(self.source, '*.*')))  # dir
@@ -103,7 +102,6 @@ class Yolov6:
             gn = torch.tensor(img_src.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             img_ori = img_src
 
-
             if len(det):
                 det[:, :4] = Inferer.rescale(img.shape[2:], det[:, :4], img_src.shape).round()
 
@@ -116,23 +114,31 @@ class Yolov6:
 
                     if save_img:
                         class_num = int(cls)  # integer class
-                        label = None if hide_labels else (self.yaml[class_num] if hide_conf else f'{self.yaml[class_num]} {conf:.2f}')
-
+                        label = None if hide_labels else (COCO_CLASSES[class_num] if hide_conf else f'{COCO_CLASSES[class_num]} {conf:.2f}')
                         Inferer.plot_box_and_label(img_ori, max(round(sum(img_ori.shape) / 2 * 0.001), 2), xyxy, label, color=Inferer.generate_colors(class_num, True))
-
+                
+                    if self.tracker:
+                        category_id = int(cls)
+                        category_name = COCO_CLASSES[category_id]
+                        score = float(conf.numpy())
+                        bbox = [int(xyxy[0]), int(xyxy[1]), int(xyxy[2]), int(xyxy[3])]
+                        object_prediction_list.append([category_name, score, bbox])
+                        
+                     
                 img_src = np.asarray(img_ori)
 
                 # Save results (image with detections)
                 if save_img:
                     cv2.imwrite(save_path, img_src)
-                
-        
+                    LOGGER.info(f'Saved {save_path}')
+                    
 detection_model = Yolov6(
     model_path="yolov6s.pt",
-    source="1.jpg",
-    img_size=1280,
+    source="assert/highway.jpg",
+    img_size=640,
     conf_thres=0.3,
     device="cpu",
+    tracker=False,
 )
 
 detection_model.inference()
